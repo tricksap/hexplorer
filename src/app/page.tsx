@@ -1,101 +1,113 @@
-import Image from "next/image";
-
+"use client";
+import { ColoredSquare } from "./Components/ColoredSquare";
+import { SendHorizontal } from "lucide-react";
+import Result from "./Result";
+import { CheckGuess } from "./Helper/CheckGuess";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { GenerateHexCode } from "./Helper/GenerateHexcode";
+import { Modal } from "./Components/Modal";
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [answersArr, setAnswersArr] = useState([]);
+  const [currentGuess, setCurrentGuess] = useState("#000000");
+  const [answer, setAnswer] = useState("");
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [isWinner, setIsWinner] = useState(false);
+  const [attempt, setAttempt] = useState(6);
+
+  useEffect(() => {
+    setAnswer(GenerateHexCode());
+  }, []);
+
+  /// to track how many attempt
+  useEffect(() => {
+    if (attempt === 0) {
+      setIsGameOver(true);
+    }
+  }, [attempt]);
+
+  console.log(answer, "answer");
+  const submitHandle = (data) => {
+    const guess = "#" + data.hexCode;
+    const result = CheckGuess(guess, answer);
+    setCurrentGuess(guess);
+    setAttempt(attempt - 1);
+    setAnswersArr([...answersArr, result]);
+    const isCorrect = result.every((obj) => obj.status === "correct");
+
+    // show modal when the guess is correct
+    if (isCorrect) {
+      setIsGameOver(true);
+      setIsWinner(true);
+    }
+  };
+  return (
+    <div className="h-screen">
+      <div className="flex flex-col items-center justify-center">
+        <div className="border-b-1 mb-2 mt-10  items-center rounded-md border-2 border-black bg-white p-12">
+          <div className="flex space-x-6 ">
+            <div className="flex flex-col items-center">
+              <p>target</p>
+              <ColoredSquare hexcolor={answer} />
+            </div>
+            <div className=" flex flex-col items-center">
+              <p>your guess</p>
+              <ColoredSquare hexcolor={currentGuess} />
+            </div>
+          </div>
+          <form
+            className="mx-auto mt-4 flex w-2/3 items-center"
+            onSubmit={handleSubmit(submitHandle)} // handleSubmit ensures validation
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div className="flex flex-col">
+              <div className="flex flex-row items-center">
+                <span className="mr-1">#</span>
+                {/* <div className="flex flex-col"> */}
+                <input
+                  type="text"
+                  id="hexCode-guess"
+                  {...register("hexCode", {
+                    required: "This field is required", // Custom error message for required field
+                    pattern: {
+                      value: /^#?([A-Fa-f0-9]{6})$/, // Regex for exactly 6-character hex codes
+                      message:
+                        "Please enter a valid 6-character hex code (e.g., #FFFFFF)", // Custom error message for pattern
+                    },
+                  })}
+                  className={`block w-full rounded-lg border-2 p-1.5 text-sm focus:border-blue-500 focus:ring-blue-500 ${
+                    errors.hexCode ? "border-red-500" : "border-black"
+                  }`}
+                  placeholder="Enter 6-character hex code (e.g., #FFFFFF)"
+                />
+
+                {/* </div> */}
+                <button
+                  type="submit"
+                  className="ms-2 rounded-lg border border-blue-700 bg-blue-700 p-1.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >
+                  <SendHorizontal />
+                </button>
+              </div>
+              <div>
+                {/* Error Messages */}
+                {errors.hexCode && (
+                  <span className="ml-2 text-sm text-red-600">
+                    {errors.hexCode.message}
+                  </span>
+                )}
+              </div>
+            </div>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <Result answersArr={answersArr} />
+      </div>
+      {isGameOver && <Modal isWinner={isWinner} answer={answer} />}
     </div>
   );
 }

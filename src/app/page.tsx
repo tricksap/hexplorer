@@ -26,7 +26,9 @@ export default function Home() {
   const [attempt, setAttempt] = useState(6);
 
   useEffect(() => {
-    setAnswer(GenerateHexCode());
+    const answer = GenerateHexCode();
+    setAnswer(answer);
+    console.log(answer, "answer");
   }, []);
 
   /// to track how many attempt
@@ -36,9 +38,7 @@ export default function Home() {
     }
   }, [attempt]);
 
-  console.log(answer, "answer");
   const submitHandle = (data: FormData) => {
-    console.log(data, "data");
     const guess = "#" + data.hexCode.toUpperCase();
     const result = CheckGuess(guess, answer);
     setCurrentGuess(guess);

@@ -9,7 +9,7 @@ export function ResultBox({
 }) {
   return (
     <div
-      className={`flex h-14 w-14 items-center justify-center rounded-xl border-2 border-black font-bold text-white`}
+      className={`flex items-center justify-center rounded-xl border-2 border-black p-3 font-bold text-white sm:h-14 sm:w-14`}
       style={{ backgroundColor: hexcolor }}
     >
       {value}
